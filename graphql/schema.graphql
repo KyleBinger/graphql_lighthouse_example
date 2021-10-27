@@ -1,0 +1,145 @@
+"A date string with format `Y-m-d`, e.g. `2011-05-23`."
+scalar Date @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date")
+
+"A datetime string with format `Y-m-d H:i:s`, e.g. `2018-05-23 13:43:32`."
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+# type Query {
+  # users: [User!]! @paginate(defaultCount: 10)
+  # user(id: ID @eq): User @find
+# }
+
+# where and wherehas queries cannot be ma,ed the same thing, otherwise the last one will take precedence
+# consider naming whereHas condition something that ties back to the relationship
+type Query {
+  posts: [Post!]! @all
+  # posts: [Post!]! @paginate
+  post(where: _ @whereConditions( columns: ["id", "author_id"]) ): [Post!]! @all
+  postWithAuthor( hasAuthor: _ @whereHasConditions(columns: ["name", "email"]) ): [Post!]! @all
+}
+
+# Example querying a posts that match a specific author id
+# {
+#   post (where: { column: AUTHOR_ID, operator: EQ, value: 1 }) {
+#     id
+#     title
+#     author {
+#       name
+#     }
+#     comments {
+#       id
+#       reply
+#     }
+#   }
+# }
+
+# Example querying a relationship with the user of the post's name
+# {
+#   postWithAuthor (hasAuthor: { column: NAME, operator: EQ, value: "Tyler Treasure" }) {
+#     id
+#     title
+#     author {
+#       name
+#     }
+#     comments {
+#       id
+#       reply
+#     }
+#   }
+# }
+
+# Example query to get all posts
+# {
+#   posts {
+#     id
+#     title
+#     author {
+#       name
+#     }
+#     comments {
+#       id
+#       reply
+#     }
+#   }
+# }
+
+# Example query with paginate
+# {
+#   posts (first: 10) {
+#     data {
+#       id
+#       title
+#       author {
+#         name
+#       }
+#       comments {
+#         id
+#         reply
+#       }
+#     }
+#     paginatorInfo {
+#       currentPage
+#       lastPage
+#     }
+#   }
+# }
+
+# Example query with specifying post id (not using advanced where queries)
+# {
+#   post (id: 3) {
+#     id
+#     title
+#     author {
+#       name
+#     }
+#     comments {
+#       id
+#       reply
+#     }
+#   }
+# }
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  created_at: DateTime!
+  updated_at: DateTime!
+  posts: [Post!]! @hasMany
+}
+
+type Mutation {
+  createUser(input: CreateUserInput! @spread): User @create
+}
+
+# Example of how to call the above mutation from the client
+# mutation {
+#   createUser(input: {
+#     name: "Rick Simps",
+#     email: "Viva Italia"
+#   }) {
+#     id
+#     name
+#     email
+#   }
+# }
+
+input CreateUserInput {
+  name: String!
+  email: String!
+}
+
+type Post {
+  id: ID!
+  title: String!
+  content: String!
+  author: User! @belongsTo
+  comments: [Comment!]! @hasMany
+}
+
+type Comment {
+  id: ID!
+  reply: String!
+  post: Post! @belongsTo
+}
+
